@@ -3,12 +3,13 @@ import numpy as np
 from anytree import Node, RenderTree, findall
 
 class Dream:
-    def __init__(self, dreamtree=None):
+    def __init__(self, dreamtree=None, raw_point_data=None):
         self.dreamtree = dreamtree
+        self.raw_point_data = raw_point_data
 
-    
-    # def add_dream_node(self):
-    #     self.dreamtree
+    def get_node_keys(self):
+        ### name=1, parent=self.dream.dreamtree.root,dream_coords={'x': x, 'y': y, 'z': z}, dream_radius=dream_node_radius, dream_node_type=dream_node_type
+        return [ 'name', 'parent', 'dream_coords', 'dream_radius', 'dream_node_type' ]
 
     def set_dreamtree(self, dreamtree):
         self.dreamtree = dreamtree
@@ -20,9 +21,15 @@ class Dream:
     def get_dream_node_by_name(self, node_name):
         nodes =  findall( self.dreamtree.root, filter_= lambda node: node.name == node_name )
         return nodes[0]
- #   def extract_spatial_dream(self):
+ 
+    def extract_spatial_dream(self):
+        return self.raw_point_data
 
-
+    def add_raw_data(self, data):
+        if self.raw_point_data is None:
+            self.raw_point_data= [ data ]
+        else:
+            self.raw_point_data.append( data )
 
 class DreamExtractor:
     def __init__(self, dream_file):
@@ -54,17 +61,15 @@ class DreamExtractor:
                         dream_node_radius = float_list[5]
                         dream_node_parent = int(float_list[6]) # parent node (parent trace number)
                         
-                        print(float_list)
-
                         if trace_num is 1: #first node.
                             new_dream_node = Node(name=1, parent=self.dream.dreamtree.root,
                                              dream_coords={'x': x, 'y': y, 'z': z}, dream_radius=dream_node_radius, dream_node_type=dream_node_type)
+                            self.dream.add_raw_data([x, y, z])
                         else:
                             dream_node_parent = self.dream.get_dream_node_by_name( dream_node_parent )
-                            print(dream_node_parent)
-                            print("---")
                             new_dream_node = Node(name=trace_num, parent=dream_node_parent,
                                              dream_coords={'x': x, 'y': y, 'z': z}, dream_radius=dream_node_radius, dream_node_type=dream_node_type)
+                            self.dream.add_raw_data([ x, y, z ])
 
                     except IndexError:
                         print("not enough floats within this dream node")
